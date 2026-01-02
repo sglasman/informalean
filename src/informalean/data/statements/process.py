@@ -2,6 +2,9 @@ from collections import Counter
 from datasets import load_dataset
 from informalean.data.statements.schemas import raw_herald_statements_features
 from informalean.datasets import HERALD_STATEMENTS
+from pathlib import Path
+import numpy as np
+import informalean.data.vectorize as vectorize
 
 
 def load_raw_statements():
@@ -12,7 +15,14 @@ def load_raw_statements():
 
 def process_statements():
     raw = load_raw_statements()
-    return raw.map(_strip_statement).map(_add_opens)
+    return raw.map(_strip_statement)
+
+def save_tfidf_embeddings():
+    output_dir = Path("data/statements/processed")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    np.save(output_dir / "tfidf_svd", vectorize.tfidf(process_statements()["formal_statement"]))
+    
+# Unused
 
 
 def _unpack_opens(formal_statement: str) -> tuple[list[str], list[str]]:

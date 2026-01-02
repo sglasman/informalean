@@ -12,8 +12,7 @@ processed_herald_statements_features_step_1: Features = Features(
     **raw_herald_statements_features,
     **Features(
         {
-            "open_namespaces": List(Value("string")),
-            "open_scoped_namespaces": List(Value("string")),
+            "interesting_words": List(Value("string"))
         }
     ),
 )

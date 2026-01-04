@@ -1,0 +1,3 @@
+data:
+  faiss_statement_nlist: 4096
+  faiss_statement_n_train: 200000

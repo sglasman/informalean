@@ -1,1 +1,0 @@
-HERALD_STATEMENTS: str = "FrenzyMath/Herald_statements"

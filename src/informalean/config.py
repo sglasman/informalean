@@ -5,6 +5,9 @@ import yaml
 class DataConfig(BaseModel):
     faiss_statement_nlist: int
     faiss_statement_n_train: int
+    faiss_statement_nprobe: int
+    n_nearest_neighbors: int
+    group_distance_threshold: float
 
 
 class Config(BaseModel):

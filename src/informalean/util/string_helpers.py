@@ -3,7 +3,7 @@ def tokenize_for_interesting_words(s: str):
     buffer = []
 
     def empty_buffer():
-        if buffer: 
+        if buffer:
             tokens.add("".join(buffer))
         buffer.clear()
 
@@ -26,3 +26,17 @@ def is_interesting(word):
 
 ignored_chars = "[](){}→:=+-.,"
 chars_and_nums = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩᶠ"
+open_brackets = "[({"
+close_brackets = "])}"
+declaration_words = {
+    "def",
+    "theorem",
+    "lemma",
+    "opaque",
+    "inductive",
+    "axiom",
+    "example",
+    "instance",
+    "abbrev",
+    "irreducible_def",
+}

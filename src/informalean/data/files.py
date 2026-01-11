@@ -17,3 +17,6 @@ def faiss_index_path():
 
 def preprocessed_statements_path():
     return processed_statements_dir() / "preprocessed_statements.jsonl"
+
+def processed_statements_path():
+    return processed_statements_dir() / "processed_statements.jsonl"

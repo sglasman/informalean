@@ -85,6 +85,7 @@ def _with_nearest_neighbors(preprocessed, data_config: DataConfig) -> Dataset:
         lambda row, index: {
             "nearest_neighbors": [
                 {
+                    "original_index": neighbor_index,
                     "hash": preprocessed[neighbor_index]["hash"],
                     "similarity": float(similarity),
                 }
@@ -110,16 +111,18 @@ def _with_group_ids(with_nearest_neighbors: Dataset, data_config: DataConfig):
 
 def _run_union_find(with_nearest_neighbors: Dataset, threshold: float):
     union_find = UnionFind(len(with_nearest_neighbors))
-    hashes_to_indices = {row["hash"]: i for i, row in enumerate(with_nearest_neighbors)}
+    uncompressed_tfidf = vectorize.tfidf(load_preprocessed_statements()["normalized_formal_statement"])
     union_find.run(
         lambda i: [
-            hashes_to_indices[neighbors["hash"]]
+            neighbors["original_index"]
             for neighbors in with_nearest_neighbors[i]["nearest_neighbors"]
-            if neighbors["similarity"] > threshold
+            if sparse_similarity(i, neighbors["original_index"], uncompressed_tfidf) > threshold
         ]
     )
     return union_find
 
+def sparse_similarity(i: int, j: int, uncompressed_tfidf) -> float:
+    return (uncompressed_tfidf[i] @ uncompressed_tfidf[j].T)[0, 0]
 
 # Auxiliary functions
 
@@ -127,7 +130,7 @@ def _run_union_find(with_nearest_neighbors: Dataset, threshold: float):
 def _save_tfidf_embeddings() -> None:
     np.save(
         tfidf_svd_statements_path(),
-        vectorize.tfidf(load_preprocessed_statements()["normalized_formal_statement"]),
+        vectorize.svd_tfidf(load_preprocessed_statements()["normalized_formal_statement"]),
     )
 
 

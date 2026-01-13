@@ -8,8 +8,10 @@ vectorizer = TfidfVectorizer(
 )
 svd = TruncatedSVD(n_components=256)
 
-
 def tfidf(data) -> np.array:
+    return normalize(vectorizer.fit_transform(data).astype(np.float32))
+
+def svd_tfidf(data) -> np.array:
     return normalize(
         svd.fit_transform(vectorizer.fit_transform(data)).astype(np.float32)
     )

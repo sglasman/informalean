@@ -396,6 +396,19 @@ wheels = [
 ]
 
 [[package]]
+name = "datasketch"
+version = "1.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/67/1f/f460732929eab6c5dc79f0e038c6cf795cb095492a5f6ffd93903bfbd0af/datasketch-1.8.0.tar.gz", hash = "sha256:1cb7af36d57d3d22382bdb52629ff44e6708d147dcbfbf70e6b66d8944b14b77", size = 89141, upload-time = "2025-11-28T00:48:01.18Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d3/b1/746ae38b29ab27620290b0bc2f2ccc25f2d207eafc2b36546a8e2bf32d65/datasketch-1.8.0-py3-none-any.whl", hash = "sha256:84641506b4b9283e884f13bd888d58e687a8b56fd1cf7d1667cf2ad12a7185a8", size = 96066, upload-time = "2025-11-28T00:47:59.679Z" },
+]
+
+[[package]]
 name = "decorator"
 version = "5.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -783,10 +796,12 @@ source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
     { name = "datasets" },
+    { name = "datasketch" },
     { name = "duckdb" },
     { name = "evaluate" },
     { name = "faiss-cpu" },
     { name = "matplotlib" },
+    { name = "numpy" },
     { name = "peft" },
     { name = "pydantic" },
     { name = "ruff" },
@@ -803,10 +818,12 @@ dev = [
 requires-dist = [
     { name = "accelerate", specifier = ">=1.12.0" },
     { name = "datasets", specifier = ">=4.4.2" },
+    { name = "datasketch", specifier = ">=1.8.0" },
     { name = "duckdb", specifier = ">=1.4.3" },
     { name = "evaluate", specifier = ">=0.4.6" },
     { name = "faiss-cpu", specifier = ">=1.13.2" },
     { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "numpy", specifier = ">=2.4.0" },
     { name = "peft", specifier = ">=0.18.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "ruff", specifier = ">=0.14.10" },

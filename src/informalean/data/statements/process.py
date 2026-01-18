@@ -4,13 +4,13 @@ import hashlib
 from itertools import takewhile
 import logging
 import random
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, DatasetDict, load_from_disk
 from informalean.config import DataConfig
+from informalean.data.minhash_lsh import minhash_lsh
 from informalean.data.files import (
-    faiss_index_path,
-    processed_statements_path,
-    tfidf_svd_statements_path,
     preprocessed_statements_path,
+    processed_statements_path,
+    nearest_neighbors_path,
 )
 from informalean.data.statements.schemas import (
     raw_herald_statements_features,
@@ -18,15 +18,14 @@ from informalean.data.statements.schemas import (
 )
 from informalean.data.datasets import HERALD_STATEMENTS
 import numpy as np
-import informalean.data.vectorize as vectorize
-import faiss
-from informalean.data.ann import ann
+from informalean.util.language_helpers import chinese_char_fraction
 from informalean.util.string_helpers import (
     open_brackets,
     close_brackets,
     declaration_words,
 )
 from informalean.util.union_find import UnionFind
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -48,13 +47,11 @@ def load_preprocessed_statements() -> Dataset:
         )["train"]
 
 
-def load_processed_statements(data_config: DataConfig) -> Dataset:
+def load_processed_statements(data_config: DataConfig) -> DatasetDict:
     if not processed_statements_path().exists():
         return _process_preprocessed_statements(data_config)
     else:
-        return load_dataset("json", data_files=str(processed_statements_path()))[
-            "train"
-        ]
+        return load_from_disk(processed_statements_path())
 
 
 # Main processing
@@ -62,98 +59,33 @@ def load_processed_statements(data_config: DataConfig) -> Dataset:
 
 def _preprocess_statements() -> Dataset:
     raw = load_raw_statements()
+    # Some statements are in Chinese
+    english_statements = raw.filter(
+        lambda r: chinese_char_fraction(r["informal_statement"]) < 0.2
+    )
     result = _agg_formal_statements(
-        raw.map(_normalize_statement).remove_columns("formal_statement").map(_add_hash)
+        english_statements.map(_normalize_statement)
+        .remove_columns("formal_statement")
+        .map(_add_hash)
     )
     result.to_json(preprocessed_statements_path())
     return result
 
 
-def _process_preprocessed_statements(data_config: DataConfig) -> Dataset:
-    with_nearest_neighbors = _with_nearest_neighbors(
-        load_preprocessed_statements(), data_config
-    )
-    return _with_group_ids(with_nearest_neighbors, data_config)
-
-
-def _with_nearest_neighbors(preprocessed, data_config: DataConfig) -> Dataset:
-    distances, indices = _load_faiss_index(data_config).search(
-        _load_tfidf_embeddings(), data_config.n_nearest_neighbors
-    )
-    # The row indices of the index are the same as those of the preprocessed data and the embeddings
-    return preprocessed.map(
-        lambda row, index: {
-            "nearest_neighbors": [
-                {
-                    "original_index": neighbor_index,
-                    "hash": preprocessed[neighbor_index]["hash"],
-                    "similarity": float(similarity),
-                }
-                for neighbor_index, similarity in zip(
-                    indices[index, 1:], distances[index, 1:]
-                )
-            ],
-            **row,
-        },
-        with_indices=True,
-    )
-
-
-def _with_group_ids(with_nearest_neighbors: Dataset, data_config: DataConfig):
-    union_find = _run_union_find(with_nearest_neighbors, data_config.group_distance_threshold)
-    logger.info(f"Number of components: {union_find.n_components()}")
-    result = with_nearest_neighbors.map(
+def _process_preprocessed_statements(
+    preprocessed_statements: Dataset, data_config: DataConfig
+) -> DatasetDict:
+    nearest_neighbors = _load_nearest_neighbors(preprocessed_statements, data_config)
+    union_find = _union_find(nearest_neighbors)
+    with_groups = preprocessed_statements.map(
         lambda row, i: {"group_id": union_find.find(i), **row}, with_indices=True
     )
-    result.to_json(processed_statements_path())
-    return result
+    splits = _generate_splits(with_groups, union_find, train_ratio = 0.8, val_ratio = 0.1)
+    splits.save_to_disk(processed_statements_path())
+    return splits
 
-
-def _run_union_find(with_nearest_neighbors: Dataset, threshold: float):
-    union_find = UnionFind(len(with_nearest_neighbors))
-    uncompressed_tfidf = vectorize.tfidf(load_preprocessed_statements()["normalized_formal_statement"])
-    union_find.run(
-        lambda i: [
-            neighbors["original_index"]
-            for neighbors in with_nearest_neighbors[i]["nearest_neighbors"]
-            if sparse_similarity(i, neighbors["original_index"], uncompressed_tfidf) > threshold
-        ]
-    )
-    return union_find
-
-def sparse_similarity(i: int, j: int, uncompressed_tfidf) -> float:
-    return (uncompressed_tfidf[i] @ uncompressed_tfidf[j].T)[0, 0]
 
 # Auxiliary functions
-
-
-def _save_tfidf_embeddings() -> None:
-    np.save(
-        tfidf_svd_statements_path(),
-        vectorize.svd_tfidf(load_preprocessed_statements()["normalized_formal_statement"]),
-    )
-
-
-def _load_tfidf_embeddings() -> np.array:
-    if not tfidf_svd_statements_path().exists():
-        logger.info("Saved TF-IDF embeddings didn't exist; creating them")
-        _save_tfidf_embeddings()
-    return np.load(tfidf_svd_statements_path())
-
-
-def _save_faiss_index(data_config: DataConfig) -> None:
-    faiss.write_index(
-        ann(_load_tfidf_embeddings(), data_config), str(faiss_index_path())
-    )
-
-
-def _load_faiss_index(data_config: DataConfig):
-    if not faiss_index_path().exists():
-        logger.info("Saved FAISS index didn't exist; creating it")
-        _save_faiss_index(data_config)
-    index = faiss.read_index(str(faiss_index_path()))
-    index.nprobe = data_config.faiss_statement_nprobe
-    return index
 
 
 def _normalize_statement(data):
@@ -168,7 +100,6 @@ def _normalize_statement(data):
     ]
     in_multiline_comment = False
     removed_multiline_comments = []
-    log_after = False
     for line in filtered_lines:
         if in_multiline_comment and line.endswith("-/"):
             in_multiline_comment = False
@@ -176,18 +107,20 @@ def _normalize_statement(data):
             continue
         elif line.startswith("/--") and not line.endswith("-/"):
             in_multiline_comment = True
-            log_after = True
-            logger.info(f"In multiline comment. Id: {data['id']}")
         elif not in_multiline_comment:
             removed_multiline_comments.append(line)
 
     stripped_statement = (
         " ".join(removed_multiline_comments)
+        .strip()
         .removesuffix(":= by sorry")
+        .removesuffix(":=  by sorry")
+        .removesuffix(":=by sorry")
         .removesuffix(":= sorry")
     )
-    if log_after:
-        logger.info(stripped_statement)
+    if "by sorry" in stripped_statement:
+        print(f"Ending bytes: {stripped_statement[-20:].encode()}")
+        print(f"Ends with target: {stripped_statement.endswith(':= by sorry')}")
     split = stripped_statement.split()
     declaration_index = 0
     data["keep"] = True
@@ -235,6 +168,66 @@ def _find_theorem_name(words: list[str]) -> tuple[str, int]:
 def _add_hash(data):
     data["hash"] = hashlib.md5(data["normalized_formal_statement"].encode()).hexdigest()
     return data
+
+
+def _load_nearest_neighbors(
+    preprocessed: Dataset, data_config: DataConfig
+) -> list[list[int]]:
+    threshold = data_config.minhash_lsh_threshold
+    if nearest_neighbors_path(threshold).exists():
+        return json.loads(nearest_neighbors_path(threshold).read_text())
+    else:
+        nearest_neighbors = minhash_lsh(
+            preprocessed["normalized_formal_statement"], data_config
+        )
+        nearest_neighbors_path(threshold).write_text(json.dumps(nearest_neighbors))
+        return nearest_neighbors
+
+
+def _union_find(neighbors: list[list[int]]) -> UnionFind:
+    union_find = UnionFind(len(neighbors))
+    union_find.run(lambda i: [j for j in neighbors[i] if j != i])
+    return union_find
+
+
+def _generate_splits(
+    with_groups: Dataset, uf: UnionFind, train_ratio: float, val_ratio: float
+) -> DatasetDict:
+    n = uf.n
+    group_ids_to_sizes = {group_id: size for size, group_id in uf.top_components(uf.n)}
+    group_ids = list(group_ids_to_sizes.keys())
+    random.shuffle(group_ids)
+    target_train_count = int(n * train_ratio)
+    target_val_count = int(n * val_ratio)
+    current_train_count = 0
+    current_val_count = 0
+
+    group_to_split = {}
+    for group_id in group_ids:
+        if current_train_count < target_train_count:
+            group_to_split[group_id] = "train"
+            current_train_count += group_ids_to_sizes[group_id]
+        elif current_val_count < target_val_count:
+            group_to_split[group_id] = "val"
+            current_val_count += group_ids_to_sizes[group_id]
+        else:
+            group_to_split[group_id] = "test"
+
+    train_indices, val_indices, test_indices = [], [], []
+    for i, group_id in enumerate(with_groups["group_id"]):
+        split = group_to_split[group_id]
+        if split == "train":
+            train_indices.append(i)
+        elif split == "val":
+            val_indices.append(i)
+        else:
+            test_indices.append(i)
+
+    return DatasetDict({
+        "train": with_groups.select(train_indices),
+        "val": with_groups.select(val_indices),
+        "test": with_groups.select(test_indices),
+    })
 
 
 # There are some examples in the dataset with identical formal statement. Aggregate these.

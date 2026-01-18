@@ -24,6 +24,10 @@ def is_interesting(word):
     return word not in list(chars_and_nums)
 
 
+def shingle(s: str, k: int) -> list[str]:
+    return [s[i : i + k] for i in range(len(s) - k + 1)]
+
+
 ignored_chars = "[](){}→:=+-.,"
 chars_and_nums = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩᶠ"
 open_brackets = "[({"

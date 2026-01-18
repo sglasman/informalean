@@ -1,6 +1,4 @@
 data:
-  faiss_statement_nlist: 4096
-  faiss_statement_n_train: 200000
-  faiss_statement_nprobe: 16
-  n_nearest_neighbors: 10
-  group_distance_threshold: 0.93
+  minhash_shingle_length: 5
+  minhash_num_perm: 128
+  minhash_lsh_threshold: 0.9

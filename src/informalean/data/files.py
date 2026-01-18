@@ -7,16 +7,11 @@ def processed_statements_dir():
     return path
 
 
-def tfidf_svd_statements_path():
-    return processed_statements_dir() / "tfidf_svd.npy"
-
-
-def faiss_index_path():
-    return processed_statements_dir() / "faiss_index.faiss"
-
+def nearest_neighbors_path(threshold: float):
+    return processed_statements_dir() / f"nearest_neighbors_{threshold}.json"
 
 def preprocessed_statements_path():
     return processed_statements_dir() / "preprocessed_statements.jsonl"
 
 def processed_statements_path():
-    return processed_statements_dir() / "processed_statements.jsonl"
+    return processed_statements_dir() / "processed_statements"

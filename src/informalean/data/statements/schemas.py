@@ -1,4 +1,4 @@
-from datasets import Features, Value, List
+from datasets import Features, Value
 
 raw_herald_statements_features: Features = Features(
     {
@@ -10,10 +10,11 @@ raw_herald_statements_features: Features = Features(
 
 preprocessed_herald_statements_features: Features = Features(
     {
-        "ids": List(Value("int64")),
+        "id": Value("int64"),
         "hash": Value("string"),
-        "informal_statements": List(Value("string")),
+        "informal_statement": Value("string"),
         "normalized_formal_statement": Value("string"),
-        "theorem_names": List(Value("string"))
+        "theorem_name": Value("string"),
+        "duplicate_count": Value("int64"),
     }
 )

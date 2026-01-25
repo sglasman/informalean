@@ -2,3 +2,6 @@ data:
   minhash_shingle_length: 5
   minhash_num_perm: 128
   minhash_lsh_threshold: 0.9
+  max_tokenized_length: 512
+train:
+  model_name: "Qwen/Qwen2.5-0.5B-Instruct"

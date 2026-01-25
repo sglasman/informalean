@@ -6,11 +6,14 @@ class DataConfig(BaseModel):
     minhash_shingle_length: int
     minhash_num_perm: int
     minhash_lsh_threshold: float
+    max_tokenized_length: int
 
+class TrainConfig(BaseModel):
+    model_name: str
 
 class Config(BaseModel):
     data: DataConfig
-
+    train: TrainConfig
 
 config_path = Path("config/config.yaml")
 

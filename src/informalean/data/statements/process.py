@@ -48,14 +48,14 @@ def process_statements(
         raw = _load_raw_statements()
         english_statements = _filter_to_english(raw)
         normalized_statements = _normalize_statements(english_statements)
-        with_duplicate_counts = _add_duplicate_count(normalized_statements)
+        with_weights = _add_weight(normalized_statements)
 
         # Grouping
         nearest_neighbors = _generate_nearest_neigbors(
-            with_duplicate_counts, data_config
+            with_weights, data_config
         )
         union_find = _union_find(nearest_neighbors)
-        with_groups = _group_statements(with_duplicate_counts, union_find)
+        with_groups = _group_statements(with_weights, union_find)
         with_groups.save_to_disk(processed_statements_step_1_path())
     else:
         if (
@@ -335,11 +335,11 @@ def _generate_splits(
 # There are many examples in the dataset with identical formal statement. Add duplicate count.
 
 
-def _add_duplicate_count(dataset: Dataset) -> Dataset:
+def _add_weight(dataset: Dataset) -> Dataset:
     hash_counts = Counter(dataset["hash"])
     return dataset.map(
-        lambda row: {"duplicate_count": hash_counts[row["hash"]], **row},
-        desc="Adding duplicate count",
+        lambda row: {"weight": 1.0 / hash_counts[row["hash"]], **row},
+        desc="Adding weights due to duplicates",
     )
 
 

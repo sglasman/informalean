@@ -27,7 +27,10 @@ class TrainConfig(BaseModel):
     lora_r: int 
     lora_alpha: int 
     lora_dropout: float 
-    lora_target_modules: list[str] 
+    lora_target_modules: list[str]
+    # Quantization
+    load_in_4bit: bool
+    bnb_4bit_use_double_quant: bool
     # Logging
     example_eval_freq: int
 

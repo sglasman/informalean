@@ -42,4 +42,4 @@ def config_path(config_name: str): return Path(f"config/{config_name}.yaml")
 
 
 def load_config(config_name) -> Config:
-    return Config.model_validate(yaml.safe_load(config_path.read_text()))
+    return Config.model_validate(yaml.safe_load(config_path(config_name).read_text()))

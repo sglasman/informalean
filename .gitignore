@@ -13,3 +13,6 @@ wheels/
 /data/
 
 trainer_output/
+artifacts/
+.claude/
+wandb/

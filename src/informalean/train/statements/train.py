@@ -57,7 +57,6 @@ def peft_config(train_config: TrainConfig):
     )
 
 
-@lru_cache(maxsize=1)
 def get_dataset(data_config: DataConfig):
     return load_processed_statements(data_config=data_config)
 

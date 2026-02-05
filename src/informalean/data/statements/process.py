@@ -18,6 +18,8 @@ from informalean.files import (
 )
 from informalean.data.minhash_lsh import minhash_lsh
 from informalean.data.statements.schemas import (
+    conversational_statements_features,
+    grouped_statements_features,
     raw_herald_statements_features,
 )
 from informalean.util.language_helpers import chinese_char_fraction
@@ -36,7 +38,8 @@ logger = logging.getLogger(__name__)
 
 def load_processed_statements(config: Config) -> DatasetDict:
     if processed_statements_final_path().exists():
-        return load_from_disk(processed_statements_final_path())
+        splits = load_from_disk(processed_statements_final_path())
+        return splits.cast(conversational_statements_features)
     else:
         return process_statements(config, from_step=2)
 
@@ -67,9 +70,11 @@ def process_statements(
             logger.warning(
                 "Failed to find saved step 1 processed statements or saved nearest neighbors. Running from step 0."
             )
-            return process_statements(data_config, train_config, from_step=0)
+            return process_statements(config, from_step=0)
         else:
-            with_groups = load_from_disk(processed_statements_step_1_path())
+            with_groups = load_from_disk(processed_statements_step_1_path()).cast(
+                grouped_statements_features
+            )
             nearest_neighbors = _load_nearest_neighbors(data_config)
             union_find = _union_find(nearest_neighbors)
     if from_step <= 1:
@@ -88,9 +93,11 @@ def process_statements(
             logger.warning(
                 "Failed to find saved step 2 processed statements. Running from step 1."
             )
-            return process_statements(data_config, train_config, from_step=1)
+            return process_statements(config, from_step=1)
         else:
-            filtered_for_length = load_from_disk(processed_statements_step_2_path())
+            filtered_for_length = load_from_disk(processed_statements_step_2_path()).cast(
+                conversational_statements_features
+            )
     if from_step <= 2:
         splits = _generate_splits(
             filtered_for_length, union_find, train_ratio=0.8, val_ratio=0.1

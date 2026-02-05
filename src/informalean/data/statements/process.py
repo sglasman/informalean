@@ -8,7 +8,7 @@ from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
 from tokenizers import Tokenizer
 
 from informalean.common import dependencies
-from informalean.config import DataConfig, TrainConfig
+from informalean.config import Config, DataConfig, TrainConfig
 from informalean.data.datasets import HERALD_STATEMENTS
 from informalean.files import (
     nearest_neighbors_path,
@@ -34,16 +34,18 @@ logger = logging.getLogger(__name__)
 # Main processing
 
 
-def load_processed_statements(data_config: DataConfig) -> DatasetDict:
+def load_processed_statements(config: Config) -> DatasetDict:
     if processed_statements_final_path().exists():
         return load_from_disk(processed_statements_final_path())
     else:
-        return process_statements(data_config, from_step=2)
+        return process_statements(config, from_step=2)
 
 
 def process_statements(
-    data_config: DataConfig, train_config: TrainConfig, from_step: int = 0
+    config: Config, from_step: int = 0
 ) -> DatasetDict:
+    data_config = config.data
+    train_config = config.train
     if from_step <= 0:
         raw = _load_raw_statements()
         english_statements = _filter_to_english(raw)

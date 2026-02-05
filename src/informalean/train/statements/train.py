@@ -57,13 +57,13 @@ def peft_config(train_config: TrainConfig):
     )
 
 
-def get_dataset(data_config: DataConfig):
-    return load_processed_statements(data_config=data_config)
+def get_dataset(config: Config):
+    return load_processed_statements(config=config)
 
 
 def create_trainer(config: Config):
     train_config = config.train
-    dataset = get_dataset(config.data)
+    dataset = get_dataset(config)
     trainer = InformaleanStatementTrainer(
         model=config.train.model_name,
         args=sft_config(train_config),

@@ -32,11 +32,15 @@ class LogExampleCompletions(TrainerCallback):
             with torch.no_grad():
                 tokenized = self.tokenizer.apply_chat_template(
                     example["prompt"], add_generation_prompt=True, return_tensors="pt"
-                ).to(model.device)
-                generated = model.generate(
-                    tokenized, max_new_tokens=256, do_sample=False
                 )
-                input_len = tokenized.shape[-1]
+                if hasattr(tokenized, "input_ids"):
+                    input_ids = tokenized.input_ids.to(model.device)
+                else:
+                    input_ids = tokenized.to(model.device)
+                generated = model.generate(
+                    input_ids, max_new_tokens=256, do_sample=False
+                )
+                input_len = input_ids.shape[-1]
                 decoded = self.tokenizer.decode(
                     generated[0][input_len:], skip_special_tokens=True
                 )

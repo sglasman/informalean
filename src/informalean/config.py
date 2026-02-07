@@ -18,6 +18,7 @@ class TrainConfig(BaseModel):
     warmup_ratio: float
     max_steps: int
     fp16: bool 
+    bf16: bool
     gradient_checkpointing: bool
     logging_steps: int 
     eval_steps: int

@@ -22,6 +22,8 @@ def model_init_kwargs(train_config: TrainConfig):
         )
         if train_config.fp16:
             bnb_config.bnb_4bit_compute_dtype = torch.float16
+        elif train_config.bf16:
+            bnb_config.bnb_4bit_compute_dtype = torch.bfloat16
         result["quantization_config"] = bnb_config
     return result
 
@@ -36,6 +38,7 @@ def sft_config(train_config: TrainConfig):
         warmup_ratio=train_config.warmup_ratio,
         max_steps=train_config.max_steps,
         fp16=train_config.fp16,
+        bf16=train_config.bf16,
         gradient_checkpointing=train_config.gradient_checkpointing,
         logging_steps=train_config.logging_steps,
         eval_steps=train_config.eval_steps,

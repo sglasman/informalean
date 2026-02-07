@@ -1,4 +1,4 @@
-from functools import lru_cache
+
 from typing import Optional
 from peft import LoraConfig
 from transformers import BitsAndBytesConfig, Trainer
@@ -6,7 +6,7 @@ from trl import SFTConfig
 import torch
 from informalean.files import statements_models_path
 
-from informalean.config import Config, DataConfig, TrainConfig, load_config
+from informalean.config import Config, TrainConfig, load_config
 from informalean.data.statements.process import load_processed_statements
 from informalean.train.statements.informalean_trainer import InformaleanStatementTrainer
 from informalean.train.statements.log_example_completions import LogExampleCompletions

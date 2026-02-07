@@ -8,7 +8,7 @@ from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
 from tokenizers import Tokenizer
 
 from informalean.common import dependencies
-from informalean.config import Config, DataConfig, TrainConfig
+from informalean.config import Config, DataConfig
 from informalean.data.datasets import HERALD_STATEMENTS
 from informalean.files import (
     nearest_neighbors_path,

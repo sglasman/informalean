@@ -1,4 +1,4 @@
-from datasets import Features, Sequence, Value
+from datasets import Features, Value
 
 raw_herald_statements_features: Features = Features(
     {
@@ -8,7 +8,6 @@ raw_herald_statements_features: Features = Features(
     }
 )
 
-# After normalization, weighting, and grouping (step 1)
 grouped_statements_features: Features = Features(
     {
         "id": Value("int64"),
@@ -21,7 +20,6 @@ grouped_statements_features: Features = Features(
     }
 )
 
-# After conversion to conversational format (step 2 and final)
 conversational_statements_features: Features = Features(
     {
         "id": Value("int64"),
@@ -29,17 +27,7 @@ conversational_statements_features: Features = Features(
         "hash": Value("string"),
         "weight": Value("float64"),
         "group_id": Value("int64"),
-        "prompt": Sequence(
-            {
-                "role": Value("string"),
-                "content": Value("string"),
-            }
-        ),
-        "completion": Sequence(
-            {
-                "role": Value("string"),
-                "content": Value("string"),
-            }
-        ),
+        "prompt": [{"role": Value("string"), "content": Value("string")}],
+        "completion": [{"role": Value("string"), "content": Value("string")}],
     }
 )

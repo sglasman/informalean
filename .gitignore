@@ -14,5 +14,6 @@ wheels/
 
 trainer_output/
 artifacts/
+remote-artifacts/
 .claude/
 wandb/

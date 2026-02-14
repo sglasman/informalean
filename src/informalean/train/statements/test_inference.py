@@ -1,23 +1,38 @@
+from pathlib import Path
 from peft import AutoPeftModelForCausalLM
-from informalean.config import TrainConfig
-from informalean.files import statements_models_path
-import informalean.common.dependencies as dependencies
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 
 class TestInference:
-
-    def __init__(self, model_subdir: str, train_config: TrainConfig):
-        self.train_config = train_config
-        self.model = AutoPeftModelForCausalLM.from_pretrained(
-            statements_models_path / model_subdir, device_map="cuda"
-        )
+    def __init__(self, model, tokenizer):
+        self.model = model
         self.model.eval()
-        self.tokenizer = dependencies.tokenizer(train_config.model_name)
+        self.tokenizer = tokenizer
+
+    @classmethod
+    def from_path(cls, path: Path):
+        return cls(
+            AutoPeftModelForCausalLM.from_pretrained(path, device_map="cuda"),
+            AutoTokenizer.from_pretrained(path),
+        )
+
+    @classmethod
+    def from_model_name(cls, model_name):
+        return cls(
+            AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda"),
+            AutoTokenizer.from_pretrained(model_name),
+        )
 
     def infer(self, prompt):
-        inputs = self.tokenizer.apply_chat_template(prompt, tokenize=True, return_dict=True, add_generation_prompt=True, return_tensors="pt")
+        inputs = self.tokenizer.apply_chat_template(
+            prompt,
+            tokenize=True,
+            return_dict=True,
+            add_generation_prompt=True,
+            return_tensors="pt",
+        )
         inputs.to(self.model.device)
         with torch.no_grad():
-            out = self.model.generate(**inputs, max_new_tokens=128, do_sample=False)
-        return self.tokenizer.decode(out[0])
+            out = self.model.generate(**inputs, max_new_tokens=512, do_sample=False)
+        return self.tokenizer.decode(out[0], skip_special_tokens=True, clean_up_tokenization_spaces=True)

@@ -4,14 +4,14 @@ data:
   minhash_lsh_threshold: 0.9
   max_tokenized_length: 512
 train:
-  model_name: "Qwen/Qwen2.5-7B-Instruct"
+  model_name: "Qwen/Qwen2.5-0.5B-Instruct"
   # SFT config
   max_length: 512
   per_device_train_batch_size: 8
   gradient_accumulation_steps: 4
   learning_rate: 1e-4
   warmup_ratio: 0.03
-  max_steps: 10000
+  max_steps: 20000
   fp16: false
   bf16: true
   gradient_checkpointing: true

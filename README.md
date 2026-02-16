@@ -1,5 +1,5 @@
 ## Informalean
-In this project we train a language model LoRA to translate theorem statements formalized in Lean to plain English. We trained against instruction-tuned Qwen 2.5 models of two sizes, 0.5B and 7B. The 7B model was already reasonably accurate at translating the statements and the finetuning mostly imparts the style of the dataset, but the 0.5B model sees significant subjective gains in task accuracy.
+In this project we train a language model LoRA to translate theorem statements formalized in Lean to plain English. We trained against instruction-tuned Qwen 2.5 models of two sizes, 0.5B and 7B. The 7B model was already reasonably accurate at translating the statements and the finetuning mostly imparts the style of the dataset, but the 0.5B model sees significant subjective gains in task accuracy. The trained artifact is available at https://huggingface.co/sglasman/informalean.
 ### Preprocessing 
 We use the [Herald dataset of formalized/natural language pairs](https://huggingface.co/datasets/FrenzyMath/Herald_statements). We filter out a number of examples whose informal statement is in Chinese, drop theorem names in order to train pure Lean translation rather than inference from theorem names, and use MinHash/LSH to group the statements by similarity to avoid leakage across the dataset splits. 
 ### Training

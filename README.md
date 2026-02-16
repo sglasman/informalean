@@ -26,6 +26,7 @@ Here are a few statements from the validation set together with the informalizat
 Some ways this project could be improved or extended:
 
 - Better eval. Current evaluation consists of ad hoc inspection of examples generated from the validation set. We could instead use a semantic similarity metric such as BERTScore to make evaluation consistent and automated.
+- More training steps. There are around 550,000 examples in the dataset, and despite significant duplication, our 20,000 training steps are unlikely to take full advantage of the data.
 - Better data. Upon inspection, many of the informal statements in the Herald dataset are incorrect. However, it's not really clear how this could be improved on without significant expense.
 - Move beyond informalizing statements to informalizing proof steps. Here we would use [LeanDojo](https://leandojo.org/)'s tracing technology to incorporate the Lean context into the language model's context, making fertile ground for training.
 - Build a VSCode plugin around the model for in-context assistance when reading Lean code.
